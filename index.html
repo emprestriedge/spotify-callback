@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  <body>
+    <p>Sending you back to Shortcuts…</p>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const code = params.get("code") || "";
+      const state = params.get("state") || "";
+      const target = "shortcuts://run-shortcut?name=" +
+        encodeURIComponent("Spotify Callback") +
+        "&input=text&text=" + encodeURIComponent(code + "||" + state);
+      location.replace(target);
+    </script>
+  </body>
+</html>
