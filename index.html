@@ -7,17 +7,31 @@
   </head>
   <body>
     <p>Returning to Shortcuts…</p>
+    <p>If nothing happens, tap the button below.</p>
+
+    <button id="go">Open Shortcuts</button>
 
     <script>
       // Full URL contains ?code=...&state=...
       const fullUrl = window.location.href;
 
-      // Forward into Shortcuts, passing the full URL as Shortcuts input text=
+      // IMPORTANT: use x-callback-url form (more consistent)
       const target =
-        "shortcuts://run-shortcut?name=SpotifyCallback&input=text&text=" +
-        encodeURIComponent(fullUrl);
+        "shortcuts://x-callback-url/run-shortcut" +
+        "?name=SpotifyCallback" +
+        "&input=text" +
+        "&text=" + encodeURIComponent(fullUrl);
 
-      window.location.replace(target);
+      // Try auto-forward (may be blocked/stripped by Safari sometimes)
+      setTimeout(() => {
+        window.location.href = target;
+      }, 150);
+
+      // Guaranteed fallback via user gesture
+      document.getElementById("go").addEventListener("click", () => {
+        window.location.href = target;
+      });
     </script>
   </body>
 </html>
+
