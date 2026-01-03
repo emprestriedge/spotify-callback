@@ -1,16 +1,23 @@
 <!doctype html>
 <html>
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Callback</title>
+  </head>
   <body>
-    <p>Sending you back to Shortcuts…</p>
+    <p>Returning to Shortcuts…</p>
+
     <script>
-      const params = new URLSearchParams(location.search);
-      const code = params.get("code") || "";
-      const state = params.get("state") || "";
-      const target = "shortcuts://run-shortcut?name=" +
-        encodeURIComponent("Spotify Callback") +
-        "&input=text&text=" + encodeURIComponent(code + "||" + state);
-      location.replace(target);
+      // Full URL contains ?code=...&state=...
+      const fullUrl = window.location.href;
+
+      // Forward into Shortcuts, passing the full URL as Shortcuts input text=
+      const target =
+        "shortcuts://run-shortcut?name=SpotifyCallback&input=text&text=" +
+        encodeURIComponent(fullUrl);
+
+      window.location.replace(target);
     </script>
   </body>
 </html>
