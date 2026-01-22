@@ -1,2 +1,2 @@
 # spotify-callback
-Spotify Apple Shortcut
+Spotify ios app
