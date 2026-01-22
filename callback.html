@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Spotify Callback</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding: 16px; }
+      code { background: #f2f2f2; padding: 2px 6px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h2>Spotify Callback</h2>
+    <p id="status">Processing…</p>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const state = params.get("state");
+      const error = params.get("error");
+
+      const payload = { type: "SPOTIFY_AUTH_CALLBACK", code, state, error };
+
+      // If opened from your app in a popup, send code back and close.
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(payload, "*");
+        document.getElementById("status").textContent = "Sent back to app. You can close this window.";
+        window.close();
+      } else {
+        document.getElementById("status").innerHTML =
+          error ? `Error: <code>${error}</code>` :
+          code ? `Code received. Return to the app to finish sign-in.` :
+          `No code found.`;
+      }
+    </script>
+  </body>
+</html>
