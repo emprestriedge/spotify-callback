@@ -3,35 +3,86 @@
   <head>
     <meta charset="utf-8" />
     <title>Spotify Callback</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding: 16px; }
-      code { background: #f2f2f2; padding: 2px 6px; border-radius: 6px; }
-    </style>
   </head>
   <body>
-    <h2>Spotify Callback</h2>
-    <p id="status">Processing…</p>
+    <p>Finishing Spotify sign-in…</p>
 
     <script>
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const state = params.get("state");
-      const error = params.get("error");
+      (async () => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+        const error = params.get("error");
+        const returnedState = params.get("state");
 
-      const payload = { type: "SPOTIFY_AUTH_CALLBACK", code, state, error };
+        if (error) {
+          document.body.innerText = "Spotify error: " + error;
+          return;
+        }
+        if (!code) {
+          document.body.innerText = "No code found in URL.";
+          return;
+        }
 
-      // If opened from your app in a popup, send code back and close.
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(payload, "*");
-        document.getElementById("status").textContent = "Sent back to app. You can close this window.";
-        window.close();
-      } else {
-        document.getElementById("status").innerHTML =
-          error ? `Error: <code>${error}</code>` :
-          code ? `Code received. Return to the app to finish sign-in.` :
-          `No code found.`;
-      }
+        // These should be set BEFORE redirecting to Spotify
+        const storedState = sessionStorage.getItem("spotify_state");
+        const codeVerifier = sessionStorage.getItem("spotify_code_verifier");
+
+        if (!codeVerifier) {
+          document.body.innerText =
+            "Missing PKCE code_verifier. Start login again from the app.";
+          return;
+        }
+
+        // Strongly recommended
+        if (!storedState || storedState !== returnedState) {
+          document.body.innerText =
+            "State mismatch. Please restart login from the app.";
+          return;
+        }
+
+        const clientId = "YOUR_SPOTIFY_CLIENT_ID";
+        const redirectUri = "https://getready3.netlify.app/callback.html";
+
+        const body = new URLSearchParams({
+          client_id: clientId,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: redirectUri,
+          code_verifier: codeVerifier,
+        });
+
+        try {
+          const res = await fetch("https://accounts.spotify.com/api/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body,
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            document.body.innerText =
+              "Token exchange failed: " + (data.error_description || JSON.stringify(data));
+            return;
+          }
+
+          // data: access_token, token_type, expires_in, refresh_token (usually), scope
+          sessionStorage.setItem("spotify_access_token", data.access_token);
+          if (data.refresh_token) {
+            sessionStorage.setItem("spotify_refresh_token", data.refresh_token);
+          }
+          const expiresAt = Date.now() + data.expires_in * 1000;
+          sessionStorage.setItem("spotify_expires_at", String(expiresAt));
+
+          // Clean up
+          sessionStorage.removeItem("spotify_code_verifier");
+          sessionStorage.removeItem("spotify_state");
+
+          // Send user back into the app (change as needed)
+          window.location.replace("/");
+        } catch (e) {
+          document.body.innerText = "Network error: " + e.message;
+        }
+      })();
     </script>
   </body>
 </html>
